@@ -4,7 +4,7 @@ fn main() {
     let mut done = false;
     let mut sum = 0;
     let mut cycle = 0;
-    let mut position = vec!["."; 40];
+    let mut position = vec![" "; 40];
     for (i, line) in input.lines().enumerate() {
         if line.is_empty() {
             continue;
@@ -28,12 +28,12 @@ fn main() {
 fn tick(position: &mut Vec<&str>, cycle: &mut i32, sum: &mut i32, x: i32) {
     if (*cycle % 40 - x).abs() <= 1 {
         let index: usize = (*cycle % 40).try_into().unwrap();
-        position[index] = "#";
+        position[index] = "█";
     }
     *cycle += 1;
     if (*cycle) % 40 == 0 {
         print(position);
-        *position = vec!["."; 40];
+        *position = vec![" "; 40];
     }
     if (*cycle -20) %40 == 0 {
         *sum+=x* *cycle;
