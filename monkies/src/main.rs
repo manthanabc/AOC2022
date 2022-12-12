@@ -24,38 +24,6 @@ impl Mankie {
             count: 0,
         }
     }
-/*
-    fn doitsthing(&self) {
-        while self.items.borrow().len() > 0 {
-            self.thrown_items.replace(Vec::new());
-            let mut itemm = self.items.borrow_mut().remove(0);
-            let mut item = match self.opration.trim().split(" ").collect::<Vec<_>>()[..] {
-                ["old", o, "old"] => doo(itemm, o, itemm),
-                ["old", o, x] => doo(itemm, o, x.parse().unwrap()),
-                [x, o, "old"] => doo(x.parse().unwrap(), o, itemm),
-                _ => panic!("FKSDJFKSJD"),
-            };
-            itemm = item;
-            self.thrown_items.borrow_mut().push(item);
-        }
-    }
-
-    fn throw(&self, others: &RefCell<Vec<Mankie>>) {
-        for item in self.thrown_items.borrow().iter() {
-            let item = item / 3;
-            if item % self.test == 0 {
-                others.borrow_mut()[self.throwto.0]
-                    .items
-                    .borrow_mut()
-                    .push(item);
-            } else {
-                others.borrow_mut()[self.throwto.1]
-                    .items
-                    .borrow_mut()
-                    .push(item);
-            }
-        } 
-    } */
 }
 
 fn doo(item: u128, op: &str, item2: u128) -> u128 {
@@ -75,25 +43,15 @@ fn main() {
     inputs.split("\n\n").for_each(|f| {
         let mut monkie = Mankie::new();
         f.lines().for_each(|l| {
-            match l.split(" ").collect::<Vec<&str>>()[..] {
+            match l.trim().split(" ").collect::<Vec<&str>>()[..] {
                 ["Monkey", x] => monkie.index = x[..x.len() - 1].parse().unwrap(),
+                ["Starting", "items:", ..]       => l[17..].split(", ").for_each(|t| { monkie.items.borrow_mut().push(t.trim().parse().unwrap());}),
+                ["Operation:", "new", _] => todo!)_ 
                 _ => {
-                    if l.contains(&"Starting") {
-                        let items = l.split_once("items:").unwrap().1;
-                        items.split(", ").for_each(|t| {
-                            if !t.is_empty() {
-                                monkie.items.borrow_mut().push(t.trim().parse().unwrap());
-                            }
-                        });
-                    } else if l.contains("Operation") {
+                    if l.contains("Operation") {
                         let op = l.split_once("Operation: new =").unwrap().1.trim();
                         monkie.opration = op.to_string();
-                        /* match op.trim().split(" ").collect::<Vec<_>>()[..] {
-                            ["old", o, "old"] => { println!("k"); },
-                            ["old", o, x] => { println!("k"); },
-                            [x, o, "old"] => { println!("k"); },
-                            _ => panic!("FKSDJFKSJD")
-                        } */
+
                     } else if l.contains("Test") {
                         monkie.test = l.split_once("divisible by ").unwrap().1.parse().unwrap();
                     } else if l.contains("If") {
@@ -115,12 +73,10 @@ fn main() {
     });
     let factor = monkies.borrow().iter().map(|m| m.test).fold(1, lcm);
     for i in 0..10000 {
-        // let length  = monkies.borrow().len().clone();
         let lenth = monkies.borrow().len() ;
         for j in 0..lenth{
             {
                 let mut monkie = monkies.borrow()[j].clone();
-                // monkies.borrow()[j].doitsthing();
                 while monkie.items.borrow().len() > 0 {
                     let mut item = monkie.items.borrow_mut().remove(0);
                     item = match monkie.opration.trim().split(" ").collect::<Vec<_>>()[..] {
@@ -147,12 +103,8 @@ fn main() {
                 monkies.borrow_mut()[j] = monkie;
             }
         }
-            // println!("{:?}", monkies);
-            /* monkies.borrow().iter().for_each(|k|{
-                    println!("{i} {:?} {:?}", k.index, k.count);
-            }); */
     }
     let mut ans = monkies.borrow().iter().map(|g| g.count).collect::<Vec<u128>>();
     ans.sort();
-    println!("{:?}", ans);
+    println!("{:?}", ans[ans.len()-1]*ans[ans.len()-2]);
 }
