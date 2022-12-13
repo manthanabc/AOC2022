@@ -35,15 +35,18 @@ impl Pos {
   }
 } */
 
+use std::cell::RefCell;
 use std::cmp::max;
 
+#[derive(PartialEq, Clone, Debug)]
 struct Position(usize, usize);
 
-struct Node<'a> {
+#[derive(PartialEq, Clone, Debug)]
+struct Node {
     position: Position,
-    parent: &'a mut &'a Position,
-    visited: bool,
-    score: usize,
+    parent: Position,
+    visited: RefCell<bool>,
+    value: usize,
 }
 
 fn main() {
@@ -64,42 +67,73 @@ fn main() {
             }
         }
     }
-    let inpuut = &inputt[start.1].replace("S", "a");
-    let inpuuut = &inputt[end.1].replace("E", "z");
+    // println!("{}, {}", start.0, end.0);
     let mut input = inputt.clone();
+    let inpuut = &inputt[start.1].replace("S", "a");
     input[start.1] = &inpuut;
+    let inpuuut = &input[end.1].replace("E", "z");
     input[end.1] = &inpuuut;
-    println!("{:?} {:?}", start, end);
+
+    println!("{:?}", input);
+
     for (i, inp) in lines.clone() {
-        'm: for (j, ch) in inp.chars().enumerate() {
+        for (j, ch) in inp.chars().enumerate() {
             dist_map[i][j] = (j as i32 - end.0 as i32) * (j as i32 - end.0 as i32)
                 + (i as i32 - end.1 as i32) * (i as i32 - end.1 as i32);
         }
     }
 
-    /* for (i, inp) in lines {
-        'm: for (j, ch) in inp.chars().enumerate() {
 
-            // let (mut start, mut end) = inp.split_at(j);
-            // let end = &end[1..];
+    let mut min = 100000;
+    for (i, inp) in lines {
+        'm: for (j, ch) in inp.chars().enumerate() {
+            if ch == 'a' {
+                println!("finding {ch}");
+                if let Some(pn) = find_path(&(j, i), &end, &input, &dist_map, 400) {
+                if pn.len() < min {
+                    min = pn.len();
+                    println!("current best {min}");
+                }
+                }
+            }
         }
-    } */
-    print(&dist_map);
+    } 
+    // print(&dist_map);
+    // let n = find_path(&start, &end, &input, &dist_map, 10000);
+    println!("{min}");
+}
+
+fn find_path(
+    start: &(usize, usize),
+    end: &(usize, usize),
+    input: &Vec<&str>,
+    dist_map: &Vec<Vec<i32>>,
+    max_steps: usize
+) -> Option<Vec<Position>> {
+    let mut path = Vec::new();
     let mut stack: Vec<Node> = Vec::new();
     let mut found = false;
     let map = input;
+    let mut steps = 0;
     let start_node = Node {
         position: Position(start.0, start.1),
         parent: Position(start.0, start.1),
-        visited: false,
-        value: dist(start, end),
+        visited: RefCell::new(false),
+        value: dist(&start, &start, &end),
     };
-    stack.push(Position(start.0, start.1));
-    while !found() {
-        stack.sort_by
-        for node in stack {
-            if !node.visited {
-                let curr = node.position;
+    stack.push(start_node);
+    while !found || steps < max_steps {
+        // println!("{steps}");
+        steps += 1;
+        if steps > 1000 {
+            return None;
+        }
+        stack.sort_by(|a, b| b.value.partial_cmp(&a.value).unwrap());
+        for (i, node) in stack.clone().iter().enumerate() {
+            let nodee = &mut stack[i];
+            if !(*nodee.visited.borrow()) {
+                *nodee.visited.borrow_mut() = true;
+                let curr = &node.position;
                 for f in [
                     (curr.0 as i32, (curr.1 as i32 - 1) as i32),
                     ((curr.0 as i32 - 1) as i32, curr.1 as i32),
@@ -115,28 +149,81 @@ fn main() {
                         continue;
                     };
                     let f: (usize, usize) = (f.0.try_into().unwrap(), f.1.try_into().unwrap());
-                    if map[curr.1].as_bytes()[curr.0] as i8 - map[f.1].as_bytes()[f.0] as i8 <= 1 {
-                       stack.push()
+                    let dis = dist(&f, &start, &end);
+                    // println!("checking {:?} {:?} {dis} {:?}", f, node.position, end);
+                    let xk = map[curr.1].as_bytes()[curr.0];
+                    let yk = map[f.1].as_bytes()[f.0];
+                    // println!("{} {}", xk as char, yk as char);
+                    if (map[curr.1].as_bytes()[curr.0] as i8 - map[f.1].as_bytes()[f.0] as i8) >= -1
+                    {
+                        // println!("{:?}", dis);
+                        let nodee = Node {
+                            position: Position(f.0, f.1),
+                            value: node.value + 1 + dis,
+                            parent: node.position.clone(),
+                            visited: RefCell::new(false),
+                        };
+                        if dis == 0 {
+                            /* println!(
+                                "YAYY {:?}",
+                                stack
+                                    .iter()
+                                    .map(|t| t.position.clone())
+                                    .collect::<Vec<Position>>()
+                            ); */
+                            found = true;
+                            unstack(&stack, &nodee, &start, &mut path);
+                            return Some(path);
+                        }
+                        check_insert(&mut stack, nodee);
                     }
                 }
             }
         }
     }
+    return None;
+}
+
+fn check_insert(stack: &mut Vec<Node>, nod: Node) {
+    match stack.iter().position(|H| H.position == nod.position) {
+        Some(x) => {
+            // println!("Already existed just updatin'");
+            if stack[x].value > nod.value {
+                stack[x].parent = nod.parent.clone();
+                stack[x].value = nod.value;
+            }
+        }
+        None => {
+            // println!("pushed a new copy");
+            stack.push(nod)
+        }
+    }
+}
+
+fn unstack(stack: &Vec<Node>, node: &Node, start: &(usize, usize), path: &mut Vec<Position>) {
+    // println!("{:?}", node.position);
+    path.push(node.position.clone());
+    if node.position.0 == start.0 && node.position.1 == start.1 {
+        return;
+    }
+    if let Some(nod) = stack.iter().position(|H| H.position == node.parent) {
+        unstack(stack, &stack[nod].clone(), start, path);
+    }
 }
 
 fn dist(curr: &(usize, usize), start: &(usize, usize), endd: &(usize, usize)) -> usize {
-    
-    let (i ,j) = curr;
+    let (i, j) = (curr.0, curr.1);
     let end = start;
     let dstart = (j as i32 - end.0 as i32) * (j as i32 - end.0 as i32)
-            + (i as i32 - end.1 as i32) * (i as i32 - end.1 as i32);
+        + (i as i32 - end.1 as i32) * (i as i32 - end.1 as i32);
 
-    let (i ,j) = curr;
+    // let (i ,j) = curr;
     let end = endd;
-    let dend   =(j as i32 - end.0 as i32) * (j as i32 - end.0 as i32)
-            + (i as i32 - end.1 as i32) * (i as i32 - end.1 as i32);
+    // println!("{:?} {i} {j}", end);
+    let dend = (i as i32 - end.0 as i32) * (i as i32 - end.0 as i32)
+        + (j as i32 - end.1 as i32) * (j as i32 - end.1 as i32);
 
-    dstart + dend
+    (dend).try_into().unwrap()
 }
 
 /*
