@@ -18,17 +18,17 @@ fn main() {
     });
 
     let mut counter = 0;
-    for i in -300000..4000000 {
+    for i in -300000..10000000 {
          for sensor in sensors.iter() {
             let dis1 = manhattan_dis((i, 2000000), sensor.0);
             let dis2 = sensor.2;
-            if dis2 >= dis1 {
+            if dis2 >= dis1 && !sensors.iter().any(|pos| pos.0 == (i, 2000000)){
                 counter += 1;
             }
         }
     }
 
-    println!("Part 1 {}", counter);
+    println!("Part 1 {} OK I DID PART ONE THRN I DID PART 2 AND I OVERWEOTE PART ONE AND NOW IDK HOW TO DO PART ONE SO ITS INCORRECT KSKFKSJSKFJ", counter);
 
     // EDGES OF SENSOR AREA
     let mut outaed: HashSet<(i32, i32)> = HashSet::new();
